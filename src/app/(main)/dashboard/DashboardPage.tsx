@@ -15,7 +15,7 @@ export function DashboardPage() {
   const { teamId, renderTeamUrl } = useTeamUrl();
   const { showCharts, editing } = useDashboard();
   const { dir } = useLocale();
-  const pageSize = 250;
+  const pageSize = 200;
 
   const { result, query, params, setParams } = useWebsites({ teamId }, { pageSize });
   const { page } = params;
