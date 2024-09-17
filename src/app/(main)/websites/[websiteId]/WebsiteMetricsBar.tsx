@@ -1,4 +1,6 @@
+// WebsiteMetricsBar.js
 import classNames from 'classnames';
+import { useEffect } from 'react';
 import { useDateRange, useMessages, useSticky } from 'components/hooks';
 import WebsiteDateFilter from 'components/input/WebsiteDateFilter';
 import MetricCard from 'components/metrics/MetricCard';
@@ -11,18 +13,13 @@ import { Dropdown, Item } from 'react-basics';
 import useStore, { setWebsiteDateCompare } from 'store/websites';
 
 export function WebsiteMetricsBar({
-  websiteId,
-  sticky,
-  showChange = false,
-  compareMode = false,
-  showFilter = false,
-}: {
-  websiteId: string;
-  sticky?: boolean;
-  showChange?: boolean;
-  compareMode?: boolean;
-  showFilter?: boolean;
-}) {
+                                    websiteId,
+                                    sticky,
+                                    showChange = false,
+                                    compareMode = false,
+                                    showFilter = false,
+                                    onVisitorsLoaded, // Новый пропс
+                                  }) {
   const { dateRange } = useDateRange(websiteId);
   const { formatMessage, labels } = useMessages();
   const dateCompare = useStore(state => state[websiteId]?.dateCompare);
@@ -35,45 +32,52 @@ export function WebsiteMetricsBar({
 
   const { pageviews, visitors, visits, bounces, totaltime } = data || {};
 
+  // Вызов callback при загрузке данных
+  useEffect(() => {
+    if (data && onVisitorsLoaded) {
+      onVisitorsLoaded(websiteId, visitors.value);
+    }
+  }, [data, onVisitorsLoaded, websiteId, visitors]);
+
   const metrics = data
     ? [
-        {
-          ...pageviews,
-          label: formatMessage(labels.views),
-          change: pageviews.value - pageviews.prev,
-          formatValue: formatLongNumber,
-        },
-        {
-          ...visits,
-          label: formatMessage(labels.visits),
-          change: visits.value - visits.prev,
-          formatValue: formatLongNumber,
-        },
-        {
-          ...visitors,
-          label: formatMessage(labels.visitors),
-          change: visitors.value - visitors.prev,
-          formatValue: formatLongNumber,
-        },
-        {
-          label: formatMessage(labels.bounceRate),
-          value: (Math.min(visits.value, bounces.value) / visits.value) * 100,
-          prev: (Math.min(visits.prev, bounces.prev) / visits.prev) * 100,
-          change:
-            (Math.min(visits.value, bounces.value) / visits.value) * 100 -
-            (Math.min(visits.prev, bounces.prev) / visits.prev) * 100,
-          formatValue: n => Math.round(+n) + '%',
-          reverseColors: true,
-        },
-        {
-          label: formatMessage(labels.visitDuration),
-          value: totaltime.value / visits.value,
-          prev: totaltime.prev / visits.prev,
-          change: totaltime.value / visits.value - totaltime.prev / visits.prev,
-          formatValue: n =>
-            `${+n < 0 ? '-' : ''}${formatShortTime(Math.abs(~~n), ['m', 's'], ' ')}`,
-        },
-      ]
+      {
+        ...pageviews,
+        label: formatMessage(labels.views),
+        change: pageviews.value - pageviews.prev,
+        formatValue: formatLongNumber,
+      },
+      {
+        ...visits,
+        label: formatMessage(labels.visits),
+        change: visits.value - visits.prev,
+        formatValue: formatLongNumber,
+      },
+      {
+        ...visitors,
+        label: formatMessage(labels.visitors),
+        change: visitors.value - visitors.prev,
+        formatValue: formatLongNumber,
+      },
+      {
+        label: formatMessage(labels.bounceRate),
+        value: (Math.min(visits.value, bounces.value) / visits.value) * 100,
+        prev: (Math.min(visits.prev, bounces.prev) / visits.prev) * 100,
+        change:
+          (Math.min(visits.value, bounces.value) / visits.value) * 100 -
+          (Math.min(visits.prev, bounces.prev) / visits.prev) * 100,
+        formatValue: n => Math.round(+n) + '%',
+        reverseColors: true,
+      },
+      {
+        label: formatMessage(labels.visitDuration),
+        value: totaltime.value / visits.value,
+        prev: totaltime.prev / visits.prev,
+        change: totaltime.value / visits.value - totaltime.prev / visits.prev,
+        formatValue: n =>
+          `${+n < 0 ? '-' : ''}${formatShortTime(Math.abs(~~n), ['m', 's'], ' ')}`,
+      },
+    ]
     : [];
 
   const items = [
